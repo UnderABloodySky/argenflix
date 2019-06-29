@@ -377,16 +377,14 @@ WHERE nombre_actor = 'Rose McGowan';
 -- Obtener la cantidad películas por nacionalidad del director, y el promedio de puntaje de las mis-
 -- mas. El resultado debe tener sólo los campos <nacionalidad, cantidad, puntaje_promedio>. Y estar
 -- ordenado alfabeticamente por nacionalidad.
--- MAL!!!
 
-SELECT nacionalidad,
-       COUNT(nacionalidad) AS cantidad,
-       ROUND(AVG(calificacion)) AS puntaje_promedio --Uso ROUND para redondear
-FROM director d,
-     pelicula p
-WHERE d.nombre_director = p.nombre_director
-GROUP BY d.nacionalidad
-ORDER BY nacionalidad;
+SELECT  nacionalidad, 
+		COUNT (*) as cantidad, 
+		AVG (calificacion) as puntaje_promedio -- Si lo quisiera redondear seria: ROUND(AVG(ccalificacion)) AS puntaje_promedio
+FROM pelicula p NATURAL JOIN director d
+WHERE NOT (d.nacionalidad IS NULL AND p.calificacion IS NULL)
+GROUP BY nacionalidad
+ORDER BY nacionalidad ;
 
 
 -- C)	
@@ -401,20 +399,22 @@ NATURAL JOIN
    FROM pelicula INTERSECT SELECT nombre_director
    FROM serie) AS directores_de_peliculas_y_series;
 
+-- Solucion alternativa
 -- Sin usar un JOIN esto tambien se podria haber planteado como:
+ SELECT nombre_serie, temporadas 
+	FROM  serie 
+		WHERE nombre_director 
+		IN
+		(SELECT nombre_director FROM pelicula
+		 INTERSECT
+ 		 SELECT nombre_director FROM serie);
 
--- SELECT nombre_serie, temporadas 
---	FROM  serie 
---		WHERE nombre_director 
---		IN
---		(SELECT nombre_director FROM pelicula
---		 INTERSECT
--- 		 SELECT nombre_director FROM serie);
 
+-- Solucion alternativa
 -- O:
--- SELECT DISTINCT nombre_serie,temporadas
--- FROM serie,  pelicula
--- WHERE serie.nombre_director = pelicula.nombre_director;
+ SELECT DISTINCT nombre_serie,temporadas
+ FROM serie,  pelicula
+ WHERE serie.nombre_director = pelicula.nombre_director;
 
 
 -- D)
@@ -431,18 +431,18 @@ SELECT nombre_actor FROM pelicula
 EXCEPT
 SELECT nombre_actor FROM serie;
 
+-- Consulta auxiliar
 -- Nota: Para probarlo se plantea: 	
-
---SELECT * 
---	FROM 
---		(SELECT nombre_actor 
---			from serie 
---		INTERSECT  
---			SELECT DISTINCT nombre 
---				FROM actor
---			EXCEPT
---			SELECT nombre_actor 
---				FROM serie)as foo;
+SELECT * 
+	FROM 
+		(SELECT nombre_actor 
+			from serie 
+		INTERSECT  
+			SELECT DISTINCT nombre 
+				FROM actor
+			EXCEPT
+			SELECT nombre_actor 
+				FROM serie)as actores_de_series_y_peliculas;
 
 -- Al realizar la consulta, se ve que la interseccion entre los actores que trabajaron en series con los actores de la consulta dada es VACIA:
 -- Lo cual tiene sentido, dado el planteo dado. (Una diferencia jamas podria tener elementos en comun)
@@ -472,16 +472,17 @@ INNER JOIN pelicula p ON p.nombre_actor = d.actor_fetiche;
 
 -- Vemos que las series vistas por esos 2 usuarios son:
 
--- SELECT nombre_serie, anho_serie, nombre_usuario FROM vio_serie 
---		WHERE nombre_usuario = 'RossGeller85' OR nombre_usuario = 'BreakingThrones'
+-- Consulta auxiliar
+ SELECT nombre_serie, anho_serie, nombre_usuario FROM vio_serie 
+		WHERE nombre_usuario = 'RossGeller85' OR nombre_usuario = 'BreakingThrones'
 
 --  ____________________________________________________________
 -- | 					   |				|				    |
--- |	NOMBRE_SERIE       |     GENERO     | 	NOMBRE_USUARIO  |
+-- |	NOMBRE_SERIE       |   ANHO_SERIE   | 	NOMBRE_USUARIO  |
 -- |_______________________|________________|___________________| 
 -- |					   |				|				    |
--- | Friends               |    Comedia		|	RosseGeller85   |	...
--- | Game Of Thrones       |    Fantasia	|	BreakingThrones |	...
+-- | Friends               |      2011  	|	RossGeller85    |	
+-- | Game Of Thrones       |      1994     	|	BreakingThrones |	
 -- |_______________________|________________|___________________|	
 
 
@@ -491,6 +492,7 @@ INNER JOIN pelicula p ON p.nombre_actor = d.actor_fetiche;
 -- como tambien M apariciones de otros usuarios que vieron las mismas series que uno, el otro o ambos - Aunque sabemos por el ya mencionado cuadro
 -- que no tienen series vistas en comun-) 
 
+-- Solucion1
 SELECT s.nombre_serie,
        s.genero,
        nombre_usuario
@@ -508,6 +510,7 @@ WHERE (s.nombre_serie,
 -- Nota2: En caso de haber malentendido el enunciado y de pedirme los nombres de las series, genero (y nombre de usuario) de las series vistas por Ross... 
 -- y Breaking... UNICAMENTE por tales usuarios (es decir, en caso de que la columna nombre_usuario unicamente aparezcan ocurrencias de RosseGeller85 y BreakingThrones)  
 
+-- Solucion2
 SELECT nombre_serie,
        genero,
        nombre_usuario
@@ -529,6 +532,7 @@ NATURAL JOIN serie;
 -- Pero CLARAMENTE la relacion resultante tendria menos tuplas que la tabla <usuario> dado que no esta contemplando a los usuarios 
 -- que NO vieron ninguna pelicula, 	
 
+-- Solucion1
 SELECT u.nombre_usuario,
        count(vs.id_pelicula) AS cantidad_de_peliculas_vistas
 FROM usuario u
@@ -540,6 +544,7 @@ ORDER BY cantidad_de_peliculas_vistas DESC;
 -- Nota2:
 -- Si encambio,lo que se me pide es lo planteado, pero considerando tanto los usuaros que vieron como los que no	
 
+-- Solucion2
 -- A los usuarios que vieron desde 1 a N peliculas... 
 SELECT u.nombre_usuario,
        count(vs.id_pelicula) AS cantidad_de_peliculas_vistas
@@ -573,14 +578,14 @@ WHERE nombre_usuario = 'DarthVader';
 -- Es necesario identificar a los directores que no hayan dirigido ninguna película. Presente al menos
 -- dos consultas equivalentes.
 
--- Consulta 1)
+-- Consulta equivalente 1)
 SELECT nombre_director
 FROM director
 EXCEPT
 SELECT nombre_director
 FROM pelicula;
 
--- Consulta 2)
+-- Consulta equivalente 2)
 
 SELECT nombre_director
 FROM director
@@ -597,9 +602,22 @@ WHERE nombre_director NOT IN
 -- Enunciado:
 -- De los actores, se requiere identificar al segundo de mayor edad.
 
--- Nota: Entiendo que se quiere identificar la instancia. Si en realidad se pedia el nombre, habria que cambiar el " *  " por el " nombre ""  
-
+-- Solucion1 (trayendo toda la instancia)
 SELECT *
+FROM
+  (SELECT *
+   FROM actor
+   ORDER BY edad DESC
+   LIMIT 2) AS actores_mayores
+ORDER BY edad ASC
+LIMIT 1;
+
+
+-- Nota: Entiendo que se quiere identificar la instancia. 
+-- Si en realidad se pedia el nombre, habria que cambiar el " *  " por el " nombre "" Asi:
+ 
+-- Solucion2 (trayendo toda solamente el nombre)
+SELECT nombre
 FROM
   (SELECT *
    FROM actor
