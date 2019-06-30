@@ -553,7 +553,7 @@ ORDER BY cantidad_de_peliculas_vistas DESC;
 
 --Solucion alternativa
 SELECT u.nombre_usuario,
-       count(vs.id_pelicula) AS cantidad_de_peliculas_vistas
+       COUNT(vs.id_pelicula) AS cantidad_de_peliculas_vistas
 FROM usuario u
 INNER JOIN vio_pelicula vs ON u.nombre_usuario = vs.nombre_usuario
 GROUP BY u.nombre_usuario
