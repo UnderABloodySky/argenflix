@@ -1,14 +1,14 @@
 -- ACLARACION: 
 -- Para la resolucion del siguiente TP el "tipo" del atributo id_pelicula de la tabla <pelicula> se
--- definio como del "tipo" SERIAL (ligereza del lenguaje, en realidad, Serial no es un tipo per se) dado lo visto en la lista de email,
+-- definio como del "tipo" SERIAL (ligereza del lenguaje, en realidad tengo entendido que Serial no es un tipo per se) dado lo visto en la lista de email,
 -- pero en un principio se habia planteado como INT, dado lo especificado en el enunciado y por completitud del mismo. 
 -- Lo leido en la lista fue la unica razon fehaciente que encontre para cambiar el SERIAL por INT. (Sacando el detalle obvio que lo mas 
 -- razonable a la hora de crear una BBDD, es que las claves primarias de una relacion X se autogeneren, evitando asi el error a la hora
 -- de cargar tuplas con IDs invalidos.) Tambien dado lo visto en clase, que serial es una forma de general una relacion nueva, cuya 
 -- unica tupla en un numero Entero autoincremental, para poder ser utilizado como campo de la relacion definida. Se desprende entonces,
 -- que ese Serial ES UN entero. 
--- Pero vuelve a repetir, que si el enunciado LITERALMENTE pone INT, uno no lo modifique - Independientemente de que sea logico que sea
--- SERIAL en lugar de INT por las razones recien mencionadas.  
+-- Pero vuelve a repetir, que si el enunciado LITERALMENTE pone INT, no es descabellado el hecho de que uno sea reticente a modificarlo 
+-- Independientemente de que sea logico que sea SERIAL en lugar de INT por las razones recien mencionadas.  
 -- En principio, en otra base de datos que cree, defini las tablas como lo pide el enunciado. (Con id_pelicula = INT)
 -- A la hora de hacer correr los tests (utilizando postgresql desde consola, conrriendo en Ubuntu 18.04, sin PgAdmin - aunque calculo
 -- que toda esta informacion deberia de ser transparente) NO salto NINGUN error de tipo/integridad/etc. Y si no hubiera sido por los 
@@ -18,7 +18,7 @@
 
 --		INSERT INTO pelicula (id_pelicula, nombre_pelicula, genero, duracion, calificacion, nombre_actor, nombre_director) VALUES (60, 'Lavalantula', 'Terror', 92, 8, 'Steve Guttenberg', 'Mike Mendez');        
 
--- Fue un interesante descubrimiento, aunque un poco antiintuitivo: Sabiendo que si agregamos que la clase primaria sea SERIAL
+-- Fue un interesante descubrimiento, aunque un poco anti-intuitivo: Sabiendo que si agregamos que la clase primaria sea SERIAL
 -- esperaria poder delegar en eso la responsabilidad de generar las keys, en lugar de ingresarlas explicitamente.
 -- Para probar esto, se planteo:
 
@@ -65,10 +65,13 @@
 -- De haber visto el error, podria haber reaccionado en consecuencia, pero esto no ocurrio. (Con el unico compañero que hable al respecto,
 -- la unica diferencia - obviando que el lo corria en Windows y yo en Ubuntu, como dije anteriormente, informacion que repito deberia
 -- ser transparente - es que el usa PgAdmin y yo no). Aunque repito, entiendo que lo mas logico seria que los ids sean del tipo SERIAL,
--- como vimos en la teoria de SQL o bien en la practica, cuando creamos componentes, articulos, envios, etc.  (logico y practico, que mas quisiera que delegar trabajo y asegurar integridad a 
--- la hora de ingresar datos, y que cada instancia tenga un ID correcto dentro del "pool" que maneja el SERIAL)
+-- como vimos en la teoria de SQL junto a Daniel o bien en la practica, cuando creamos componentes, articulos, envios, etc con Ines, Rodri & cia.  
+-- (logico y practico, que mas quisiera que delegar trabajo y asegurar integridad a la hora de ingresar datos, y que cada instancia tenga un ID correcto dentro del "pool" que maneja el SERIAL)
 -- El oficio del estudiante que mencione anteriormente, implica ante un error, tomarlo como un reto y aprender algo del mismo (cosa que
 -- comparto e intento aplicar), pero si dicho error no aparece, tal accion resulta imposible
+
+-- Perdon lo extenso de la intro. Queria que se entienda el punto y dejar en claro mi duda.
+-- Ahora si, comencemos...
 
 
 -- ******************************************************************************************************
@@ -204,7 +207,7 @@ CREATE TABLE vio_serie(
 -- Se asume que cada director tiene sólo un actor fetiche y que dicho actor se encuentra
 -- registrado en el sistema. Escriba el código SQL que lleve adelante dicha modificación y ejecútelo.
 
--- Agrego la columna "actor_fetiche" a la relacion <Director>. La mismo es nulleable. 
+-- Agrego la columna "actor_fetiche" a la relacion <Director>. La misma es nulleable. 
 
 ALTER TABLE director ADD COLUMN actor_fetiche varchar(50);
 ALTER TABLE director ADD CONSTRAINT director_actor_fetiche FOREIGN KEY (actor_fetiche) REFERENCES actor(nombre);
@@ -213,7 +216,7 @@ ALTER TABLE director ADD CONSTRAINT director_actor_fetiche FOREIGN KEY (actor_fe
 
 -- ACLARACION:
 -- El enunciado NO especifica cuales son las restricciones de Integridad, en principio cargue todos los campos como NOT NULL.
--- Para corregirlo, se utiliza:
+-- A la hora de cargar los datos, se presentaron errores por tal razon. Para corregirlo, se utiliza:
 
 ALTER TABLE director 
 ALTER COLUMN nacionalidad
@@ -226,6 +229,8 @@ DROP NOT NULL;
 ALTER TABLE pelicula
 ALTER COLUMN duracion 
 DROP NOT NULL;
+
+-- Las demas relaciones no se modifican a como fueron inicialmente planteadas.
 
 
 --					**********************************************************************************************
@@ -242,10 +247,15 @@ DROP NOT NULL;
 -- asígnandole una calificación de 10, que es la máxima calificacion.
 
 -- Obtenemos los directores argentinos a partir de la consulta:	
- 
---		SELECT * FROM pelicula WHERE nombre_actor = 'Steve Guttenberg'
---			UNION	
---			SELECT* FROM pelicula WHERE nombre_actor = 'Ian Ziering';  
+
+-- Consulta auxiliar 
+SELECT * 
+FROM pelicula 
+WHERE nombre_actor = 'Steve Guttenberg'
+UNION	
+SELECT * 
+FROM pelicula 
+WHERE nombre_actor = 'Ian Ziering';  
 
 --
 -- A partir de eso vemos que solo 2 peliculas lo cumplen, ya que obtenemos los siguientes nombres(<Pelicula>):
@@ -278,8 +288,10 @@ WHERE id_pelicula IN
 -- sino usando la logica de AR. (Independientemente de que el motor ejecuta la consulta de forma optimizada a como la escribimos - a bajo nivel -
 -- prefiero esta opcion xq se recorre menos veces la misma cantidad de tuplas)
 
--- UPDATE pelicula SET calificacion = 10 
---	 WHERE  nombre_actor = 'Steve Guttenberg' OR  nombre_actor = 'Ian Ziering';
+-- Solucion alternativa:
+UPDATE pelicula 
+SET calificacion = 10 
+WHERE  nombre_actor = 'Steve Guttenberg' OR  nombre_actor = 'Ian Ziering';
 
 
 -- B)
@@ -380,24 +392,21 @@ WHERE nombre_actor = 'Rose McGowan';
 
 SELECT  nacionalidad, 
 		COUNT (*) as cantidad, 
-		AVG (calificacion) as puntaje_promedio -- Si lo quisiera redondear seria: ROUND(AVG(ccalificacion)) AS puntaje_promedio
+		AVG (calificacion) as puntaje_promedio -- Si lo quisiera redondear, esta linea seria: ROUND(AVG(ccalificacion)) AS puntaje_promedio
 FROM pelicula p NATURAL JOIN director d
-WHERE NOT (d.nacionalidad IS NULL AND p.calificacion IS NULL)
+WHERE NOT (d.nacionalidad IS NULL) OR NOT  (p.calificacion IS NULL)
 GROUP BY nacionalidad
-ORDER BY nacionalidad ;
+ORDER BY nacionalidad;
 
 
 -- C)	
 -- Listar el nombre y la cantidad de temporadas de las series que hayan sido dirigidas por directores
 -- que hayan dirigido por lo menos alguna película.
 
-SELECT nombre_serie,	
-       temporadas
-FROM serie
-NATURAL JOIN
-  (SELECT nombre_director
-   FROM pelicula INTERSECT SELECT nombre_director
-   FROM serie) AS directores_de_peliculas_y_series;
+ SELECT DISTINCT nombre_serie,temporadas
+ FROM serie,  pelicula
+ WHERE serie.nombre_director = pelicula.nombre_director;
+
 
 -- Solucion alternativa
 -- Sin usar un JOIN esto tambien se podria haber planteado como:
@@ -412,9 +421,13 @@ NATURAL JOIN
 
 -- Solucion alternativa
 -- O:
- SELECT DISTINCT nombre_serie,temporadas
- FROM serie,  pelicula
- WHERE serie.nombre_director = pelicula.nombre_director;
+SELECT nombre_serie,	
+       temporadas
+FROM serie
+NATURAL JOIN
+  (SELECT nombre_director
+   FROM pelicula INTERSECT SELECT nombre_director
+   FROM serie) AS directores_de_peliculas_y_series;
 
 
 -- D)
@@ -458,7 +471,6 @@ SELECT nombre_pelicula,
        d.nombre_director
 FROM director d
 INNER JOIN pelicula p ON p.nombre_actor = d.actor_fetiche;
-
 
 -- Nota: 
 -- Asumo que me piden los nombres de los actores y los directores, tanto como el de las peliculas, y no todas las instancias completas de los 2 primeros. 
@@ -518,7 +530,7 @@ FROM
   (SELECT *
    FROM vio_serie
    WHERE nombre_usuario = 'RossGeller85'
-     OR nombre_usuario = 'BreakingThrones')AS peliculas_vistas_por_Ross_Breaking
+     OR nombre_usuario = 'BreakingThrones') AS peliculas_vistas_por_Ross_Breaking
 NATURAL JOIN serie;
 
 -- G)
@@ -540,6 +552,11 @@ INNER JOIN vio_pelicula vs ON u.nombre_usuario = vs.nombre_usuario
 GROUP BY u.nombre_usuario
 ORDER BY cantidad_de_peliculas_vistas DESC;
 
+--Solucion alternativa 
+SELECT nombre_usuario, COUNT (nombre_usuario) cantidad_de_peliculas_vistas
+FROM vio_pelicula 
+GROUP BY nombre_usuario
+ORDER BY cantidad_de_peliculas_vistas DESC;
 
 -- Nota2:
 -- Si encambio,lo que se me pide es lo planteado, pero considerando tanto los usuaros que vieron como los que no	
@@ -559,9 +576,7 @@ WHERE u.nombre_usuario NOT IN
     (SELECT vs.nombre_usuario
      FROM vio_pelicula vs)
 ORDER BY cantidad_de_peliculas_vistas DESC;
-
 -- Si habia una forma de hacerlo mas eficiente/elegante, sinceramente no se me ocurrio: A lo que ya tenia le sumo lo que no.
-
 
 										
 -- H)
@@ -592,7 +607,6 @@ FROM director
 WHERE nombre_director NOT IN
     (SELECT nombre_director
      FROM pelicula);
-
 
 --	Nota: Al igual que en un caso  anterior, asumo que solo se me pide el nombre del director, si quisiera toda la instancia bastaria con un NATURAL JOIN con <director>
 -- para traer los datos pertinentes. 
@@ -632,7 +646,7 @@ LIMIT 1;
 -- Crear una vista que muestre, de las 3 peliculas más vistas que no sean estadounidenses, cuál es
 -- su origen y la cantidad de veces que fue vista por los usuarios del sistema. La vista debe llamarse
 -- otras_mas_vistas, los campos resultantes deben denominarse origen_pelicula y veces_vista.
--- MAL
+-- VER - MAL
 
 CREATE VIEW otras_mas_vistas AS
 SELECT nacionalidad AS origen_pelicula,
