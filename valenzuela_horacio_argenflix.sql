@@ -3,17 +3,17 @@
 -- definio como del "tipo" SERIAL (ligereza del lenguaje, en realidad tengo entendido que Serial no es un tipo per se) dado lo visto en la lista de email,
 -- pero en un principio se habia planteado como INT, dado lo especificado en el enunciado y por completitud del mismo. 
 -- Lo leido en la lista fue la unica razon fehaciente que encontre para cambiar el SERIAL por INT. (Sacando el detalle obvio que lo mas 
--- razonable a la hora de crear una BBDD, es que las claves primarias de una relacion X se autogeneren, evitando asi el error a la hora
--- de cargar tuplas con IDs invalidos.) Tambien dado lo visto en clase, que serial es una forma de general una relacion nueva, cuya 
+-- razonable a la hora de crear una BBDD, es que las claves primarias de las relaciones se autogeneren, evitando asi algun posible error a la hora
+-- de cargar tuplas con IDs invalidos - repetdos -.) considerando lo visto en clase, que serial es una forma de general una relacion nueva, cuya 
 -- unica tupla en un numero Entero autoincremental, para poder ser utilizado como campo de la relacion definida. Se desprende entonces,
--- que ese Serial ES UN entero. 
+-- que dicho Serial ES UN entero. 
 -- Pero vuelve a repetir, que si el enunciado LITERALMENTE pone INT, no es descabellado el hecho de que uno sea reticente a modificarlo 
 -- Independientemente de que sea logico que sea SERIAL en lugar de INT por las razones recien mencionadas.  
 -- En principio, en otra base de datos que cree, defini las tablas como lo pide el enunciado. (Con id_pelicula = INT)
--- A la hora de hacer correr los tests (utilizando postgresql desde consola, conrriendo en Ubuntu 18.04, sin PgAdmin - aunque calculo
+-- A la hora de hacer correr los tests (utilizando postgresql desde consola, corriendo en Ubuntu 18.04, sin PgAdmin - aunque calculo
 -- que toda esta informacion deberia de ser transparente) NO salto NINGUN error de tipo/integridad/etc. Y si no hubiera sido por los 
 -- mails de la lista, dicho error seria transparente, dado que desde mi experiencia empirica, dicho error no aparecio. De hecho, pude
---  ingresar los datos normalmente y empezar a resolver las consultas sin errores.
+-- ingresar los datos normalmente y empezar a resolver las consultas sin errores ni mayores sobresaltos.
 -- Luego de leer los mails, revise el dataset en detenemiento y me di cuenta que las tuplas se inserta de la siguiente manera:
 
 --		INSERT INTO pelicula (id_pelicula, nombre_pelicula, genero, duracion, calificacion, nombre_actor, nombre_director) VALUES (60, 'Lavalantula', 'Terror', 92, 8, 'Steve Guttenberg', 'Mike Mendez');        
@@ -58,18 +58,18 @@
 
 
 -- La idea interesante que se desprende es que siempre que el valor dado para "id" no esta presente en la relacion, independiente de si
--- se auto genero o si se ingreso explicitamente, uno podria cargar datos de ambas formas que son cuasi equivalentes (cuasi, por la 
--- razon dada). 
--- Asi mismo y por estas razones es que plantie el ejercicio inicialmente como INT en lugar de serial. Como ya repeti, el rol del 
+-- se auto genero o si se ingreso explicitamente, uno podria cargar datos de ambas formas que son cuasi equivalentes (digo cuasi por la 
+-- razon planteada). 
+-- Asi mismo y por tales argumentos es que plantie el ejercicio inicialmente como INT en lugar de Serial. Considero que el rol del 
 -- estudiante implica no solo demostrar/aplicar conocimientos aprendidos y aprehendidos, sino tambien respetar correctamente consignas.
 -- De haber visto el error, podria haber reaccionado en consecuencia, pero esto no ocurrio. (Con el unico compañero que hable al respecto,
 -- la unica diferencia - obviando que el lo corria en Windows y yo en Ubuntu, como dije anteriormente, informacion que repito deberia
 -- ser transparente - es que el usa PgAdmin y yo no). Aunque repito, entiendo que lo mas logico seria que los ids sean del tipo SERIAL,
 -- como vimos en la teoria de SQL junto a Daniel o bien en la practica, cuando creamos componentes, articulos, envios, etc con Ines, Rodri & cia.  
--- (logico y practico, que mas quisiera que delegar trabajo y asegurar integridad a la hora de ingresar datos, y que cada instancia tenga un ID correcto dentro del "pool" que maneja el SERIAL)
+-- (no solo logico sino tambien practico, que mas se quisiera que delegar trabajo y asegurar integridad a la hora de ingresar datos, 
+-- y que cada instancia tenga un ID correcto dentro del "pool" que maneja el SERIAL)
 -- El oficio del estudiante que mencione anteriormente, implica ante un error, tomarlo como un reto y aprender algo del mismo (cosa que
 -- comparto e intento aplicar), pero si dicho error no aparece, tal accion resulta imposible
-
 -- Perdon lo extenso de la intro. Queria que se entienda el punto y dejar en claro mi duda.
 -- Ahora si, comencemos...
 
@@ -187,12 +187,13 @@ CREATE TABLE vio_serie(
 -- Claves Primarias de las tablas <director> y <actor>, las mismas fueron ingresadas como:
 
 --   usuario
---   director
 --   actor 
+--   director
 --   serie       	Siendo el orden de estas ultimas indistinto. 
 --   pelicula
 
--- Asi mismo, y por similares razones, luego de ingresadas las tablas anteriores, se dispone ingresar las restantes relaciones:
+-- Asi mismo, y por similares razones, luego de ingresadas las tablas anteriores, se dispone ingresar las restantes relaciones
+-- que necesariamente debian suceder a las anteriores:
 
 --	vio_pelicula  	Siendo el orden de estas ultimas indistinto.
 --	vio_serie	
@@ -216,7 +217,7 @@ ALTER TABLE director ADD CONSTRAINT director_actor_fetiche FOREIGN KEY (actor_fe
 
 -- ACLARACION:
 -- El enunciado NO especifica cuales son las restricciones de Integridad, en principio cargue todos los campos como NOT NULL.
--- A la hora de cargar los datos, se presentaron errores por tal razon. Para corregirlo, se utiliza:
+-- A la hora de cargar los datos, se presentaron errores por tal razon. Para corregirlo, se utilizo:
 
 ALTER TABLE director 
 ALTER COLUMN nacionalidad
@@ -391,7 +392,7 @@ WHERE nombre_actor = 'Rose McGowan';
 -- ordenado alfabeticamente por nacionalidad.
 
 SELECT  nacionalidad, 
-		COUNT (*) as cantidad, 
+		COUNT (nacionalidad) as cantidad, 
 		AVG (calificacion) as puntaje_promedio -- Si lo quisiera redondear, esta linea seria: ROUND(AVG(ccalificacion)) AS puntaje_promedio
 FROM pelicula p NATURAL JOIN director d
 WHERE NOT (d.nacionalidad IS NULL) OR NOT  (p.calificacion IS NULL)
@@ -417,7 +418,6 @@ ORDER BY nacionalidad;
 		(SELECT nombre_director FROM pelicula
 		 INTERSECT
  		 SELECT nombre_director FROM serie);
-
 
 -- Solucion alternativa
 -- O:
@@ -545,17 +545,18 @@ NATURAL JOIN serie;
 -- que NO vieron ninguna pelicula, 	
 
 -- Solucion1
+SELECT nombre_usuario, 
+	   COUNT (nombre_usuario) AS cantidad_de_peliculas_vistas
+FROM vio_pelicula 
+GROUP BY nombre_usuario
+ORDER BY cantidad_de_peliculas_vistas DESC;
+
+--Solucion alternativa
 SELECT u.nombre_usuario,
        count(vs.id_pelicula) AS cantidad_de_peliculas_vistas
 FROM usuario u
 INNER JOIN vio_pelicula vs ON u.nombre_usuario = vs.nombre_usuario
 GROUP BY u.nombre_usuario
-ORDER BY cantidad_de_peliculas_vistas DESC;
-
---Solucion alternativa 
-SELECT nombre_usuario, COUNT (nombre_usuario) cantidad_de_peliculas_vistas
-FROM vio_pelicula 
-GROUP BY nombre_usuario
 ORDER BY cantidad_de_peliculas_vistas DESC;
 
 -- Nota2:
@@ -630,7 +631,7 @@ LIMIT 1;
 -- Nota: Entiendo que se quiere identificar la instancia. 
 -- Si en realidad se pedia el nombre, habria que cambiar el " *  " por el " nombre "" Asi:
  
--- Solucion2 (trayendo toda solamente el nombre)
+-- Solucion2 (trayendo solamente el nombre)
 SELECT nombre
 FROM
   (SELECT *
@@ -646,24 +647,29 @@ LIMIT 1;
 -- Crear una vista que muestre, de las 3 peliculas más vistas que no sean estadounidenses, cuál es
 -- su origen y la cantidad de veces que fue vista por los usuarios del sistema. La vista debe llamarse
 -- otras_mas_vistas, los campos resultantes deben denominarse origen_pelicula y veces_vista.
--- VER - MAL
 
 CREATE VIEW otras_mas_vistas AS
-SELECT nacionalidad AS origen_pelicula,
-       id_con_cantidad_de_veces_vistas.veces_vista
+SELECT nacionalidad 		 AS origen_pelicula,
+	   COUNT(nombre_usuario) AS veces_vista
 FROM
-  (SELECT id_pelicula,
-          nacionalidad
-   FROM
-     (SELECT nombre_director,
-             nacionalidad
-      FROM director
-      WHERE nacionalidad <> 'Estadounidense') AS directores_no_yankees
-   INNER JOIN pelicula p ON p.nombre_director = directores_no_yankees.nombre_director) AS peliculas_no_yankees
-INNER JOIN
-  (SELECT id_pelicula,
-          COUNT (id_pelicula) AS veces_vista
-   FROM vio_pelicula
-   GROUP BY vio_pelicula.id_pelicula) AS id_con_cantidad_de_veces_vistas ON peliculas_no_yankees.id_pelicula = id_con_cantidad_de_veces_vistas.id_pelicula
+(SELECT d.nombre_director,
+            nacionalidad,
+            p.id_pelicula,
+            nombre_usuario
+FROM 
+pelicula p INNER JOIN director d
+ON  p.nombre_director = d.nombre_director AND d.nacionalidad <> 'Estadounidense'  
+INNER JOIN vio_pelicula vp ON p.id_pelicula = vp.id_pelicula) as peliculas_no_yankees_con_usuarios_que_la_vieron
+GROUP by nacionalidad
 ORDER BY veces_vista DESC
 LIMIT 3;
+
+
+
+
+
+
+
+
+
+
