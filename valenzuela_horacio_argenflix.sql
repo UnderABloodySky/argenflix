@@ -2,8 +2,8 @@
 -- Para la resolucion del siguiente TP el "tipo" del atributo id_pelicula de la tabla <pelicula> se
 -- definio como del "tipo" SERIAL (ligereza del lenguaje, en realidad tengo entendido que Serial no es un tipo per se) dado lo visto en la lista de email,
 -- pero en un principio se habia planteado como INT, dado lo especificado en el enunciado y por completitud del mismo. 
--- Lo leido en la lista fue la unica razon fehaciente que encontre para cambiar el SERIAL por INT. (Sacando el detalle obvio que lo mas 
--- razonable a la hora de crear una BBDD, es que las claves primarias de las relaciones se autogeneren, evitando asi algun posible error a la hora
+-- Lo leido en la lista fue la razon fehaciente que encontre para cambiar el SERIAL por INT. (Sacando el detalle obvio que lo mas 
+-- razonable a la hora de crear una tabla dentro de la BBDD, es que las claves primarias de las relaciones se autogeneren, evitando asi algun posible error a la hora
 -- de cargar tuplas con IDs invalidos - repetdos -.) considerando lo visto en clase, que serial es una forma de general una relacion nueva, cuya 
 -- unica tupla en un numero Entero autoincremental, para poder ser utilizado como campo de la relacion definida. Se desprende entonces,
 -- que dicho Serial ES UN entero. 
@@ -411,7 +411,8 @@ ORDER BY nacionalidad;
 
 -- Solucion alternativa
 -- Sin usar un JOIN esto tambien se podria haber planteado como:
- SELECT nombre_serie, temporadas 
+ SELECT nombre_serie, 
+ 		temporadas 
 	FROM  serie 
 		WHERE nombre_director 
 		IN
@@ -482,11 +483,14 @@ INNER JOIN pelicula p ON p.nombre_actor = d.actor_fetiche;
 -- Obtener los nombres de la serie, el género y el nombre del usuario de las series que hayan sido vistas
 -- por los usuarios de nombre “RossGeller85” o “BreakingThrones”.
 
--- Vemos que las series vistas por esos 2 usuarios son:
-
 -- Consulta auxiliar
- SELECT nombre_serie, anho_serie, nombre_usuario FROM vio_serie 
-		WHERE nombre_usuario = 'RossGeller85' OR nombre_usuario = 'BreakingThrones'
+SELECT nombre_serie, 
+ 		anho_serie, 
+ 		nombre_usuario 
+FROM vio_serie 
+WHERE nombre_usuario = 'RossGeller85' OR nombre_usuario = 'BreakingThrones';
+
+-- Vemos que las series vistas por esos 2 usuarios son:
 
 --  ____________________________________________________________
 -- | 					   |				|				    |
