@@ -471,7 +471,7 @@ SELECT nombre_pelicula,
        nombre_actor,
        d.nombre_director
 FROM director d
-INNER JOIN pelicula p ON p.nombre_actor = d.actor_fetiche;
+INNER JOIN pelicula p ON p.nombre_actor = d.actor_fetiche and p.nombre_director = d.nombre_director; 
 
 -- Nota: 
 -- Asumo que me piden los nombres de los actores y los directores, tanto como el de las peliculas, y no todas las instancias completas de los 2 primeros. 
@@ -652,7 +652,7 @@ LIMIT 1;
 -- su origen y la cantidad de veces que fue vista por los usuarios del sistema. La vista debe llamarse
 -- otras_mas_vistas, los campos resultantes deben denominarse origen_pelicula y veces_vista.
 
-CREATE VIEW otras_mas_vistas AS
+CREATE VIEW otras_mas_vistas1 AS
 SELECT nacionalidad 		 AS origen_pelicula,
 	   COUNT(nombre_usuario) AS veces_vista
 FROM
@@ -669,11 +669,40 @@ ORDER BY veces_vista DESC
 LIMIT 3;
 
 
+-- ACLARACION:
+-- Me doy cuenta de que mal entendi el ejercicio:
+
+-- No se me pide contabilizar por nacionalidad, cuales son las mas vistas (que es lo que muestra)
+-- SINO de las 3 peliculas mas vistas.
+-- La solucion seria:
 
 
+CREATE VIEW otras_mas_vistas AS
+SELECT nacionalidad 		 AS origen_pelicula,
+	   peliculas_con_veces_vista.veces_vista
+FROM
+(SELECT 	id_pelicula,
+            nacionalidad
+FROM 
+(SELECT nombre_director,
+		nacionalidad
+FROM director
+WHERE nacionalidad <> 'Estadounidense') AS directores_no_yankees
 
+INNER JOIN 
+pelicula p
+ON p.nombre_director = directores_no_yankees.nombre_director) AS peliculas_no_yankees
 
+INNER JOIN 
+(SELECT id_pelicula,
+ 		COUNT(id_pelicula) AS veces_vista
+FROM vio_pelicula
+GROUP BY vio_pelicula.id_pelicula) AS peliculas_con_veces_vista
 
+ON peliculas_no_yankees.id_pelicula = peliculas_con_veces_vista.id_pelicula
 
+ORDER BY veces_vista DESC
+LIMIT 3;
+ 
 
 
